@@ -1,18 +1,16 @@
-import { StyleSheet, Text, View } from "react-native";
-import React, { useContext } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { MyContext } from "../MyProvider";
+import { StyleSheet, View } from "react-native";
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import SearchScreen from "./SearchScreen";
 import AddRecord from "./AddRecord";
 import {
   MaterialCommunityIcons,
-  FontAwesome,
   AntDesign,
+  Octicons,
 } from "@expo/vector-icons";
+import HistoryRecord from "./HistoryRecord";
 const MainScreen = () => {
   const Tab = createBottomTabNavigator();
-  const { users, setUsers } = useContext(MyContext);
 
   return (
     <Tab.Navigator
@@ -48,7 +46,7 @@ const MainScreen = () => {
               <MaterialCommunityIcons
                 name="notebook-outline"
                 size={focused ? 32 : 28}
-                color={focused ? "rgb(33, 120, 243)" : "rgb(48, 60, 66)"}
+                color={focused ? "rgb(132, 255, 255)" : "rgb(48, 60, 66)"}
               />
             </View>
           ),
@@ -64,18 +62,45 @@ const MainScreen = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 position: "absolute",
+                top: "-50%",
+                padding: 20,
+                backgroundColor: "rgb(144, 164, 174)",
+                borderWidth: 3,
+                borderColor: "rgb(207, 216, 220)",
+                borderRadius: 50,
               }}
             >
               <AntDesign
                 name="pluscircleo"
-                size={focused ? 32 : 28}
-                color={focused ? "rgb(33, 120, 243)" : "rgb(48, 60, 66)"}
+                size={32}
+                color={focused ? "rgb(132, 255, 255)" : "rgb(48, 60, 66)"}
               />
               {/* <FontAwesome
                 name="search"
                 size={focused ? 32 : 24}
                 color={focused ? "aqua" : "rgb(29, 87, 159)"}
               /> */}
+            </View>
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="HistoryRecord"
+        component={HistoryRecord}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <View
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                position: "absolute",
+              }}
+            >
+              <Octicons
+                name="history"
+                size={focused ? 32 : 28}
+                color={focused ? "rgb(132, 255, 255)" : "rgb(48, 60, 66)"}
+              />
             </View>
           ),
         }}

@@ -1,26 +1,27 @@
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import {
+  View,
+  Text,
+  StyleSheet,
   Dimensions,
   FlatList,
   RefreshControl,
-  StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
-  View,
 } from "react-native";
-import React, { useCallback, useContext, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MyContext } from "../MyProvider";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { FIREBASE_DB } from "../Firebase";
+import { doc, getDoc } from "firebase/firestore";
 import Loading from "../Components/Loading";
 import Toast from "react-native-toast-message";
+import { MyContext } from "../MyProvider";
 
-const SearchScreen = ({ navigation }) => {
+const HistoryRecord = ({ navigation }) => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { setName, amountType, setAmountType } = useContext(MyContext);
+  const { setName, amountHistoryType, setAmountHistoryType } =
+    useContext(MyContext);
   const [isFocused, setIsFocused] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -69,16 +70,22 @@ const SearchScreen = ({ navigation }) => {
       </View>
     ),
   };
-  useEffect(() => {
-    getRecords(amountType);
-  }, [amountType, search]);
-  const getRecords = async (amountType) => {
+  const onRefresh = useCallback(async (amountHistoryType) => {
+    setRefreshing(true);
+    await gethistoryRecords(amountHistoryType);
+    setRefreshing(false);
+  }, []);
+  const goDetail = (item) => {
+    setName(item);
+    navigation.navigate("HistoryDetail");
+  };
+  const gethistoryRecords = async (amountHistoryType) => {
     setIsLoading(true);
     try {
       const recordRef = doc(
         FIREBASE_DB,
-        "moneyRecords",
-        "nfeQjjQlX2bllB7Er6IB"
+        "historyRecords",
+        "pEIb2hhe8sXdDjkG1dnS"
       );
       const docSnap = await getDoc(recordRef);
 
@@ -87,8 +94,9 @@ const SearchScreen = ({ navigation }) => {
         let updatedArray;
 
         if (search.length === 0) {
-          updatedArray = amountType === 2 ? recordData.given : recordData.taken;
-        } else if (amountType === 2) {
+          updatedArray =
+            amountHistoryType === 2 ? recordData.given : recordData.taken;
+        } else if (amountHistoryType === 2) {
           updatedArray = recordData.given.filter(
             (item) => item.name === search
           );
@@ -114,101 +122,53 @@ const SearchScreen = ({ navigation }) => {
       setIsLoading(false);
     }
   };
-
-  const onRefresh = useCallback(async (amountType) => {
-    setRefreshing(true);
-    await getRecords(amountType);
-    setRefreshing(false);
-  }, []);
-  const goDetail = (item) => {
-    setName(item);
-    navigation.navigate("DetailScreen");
-  };
-  const useArrayChangeListener = () => {
-    useEffect(() => {
-      setIsLoading(true);
-      // Belge referansı
-      const docRef = doc(FIREBASE_DB, "moneyRecords", "nfeQjjQlX2bllB7Er6IB");
-
-      // Önceki değerleri saklamak için değişkenler
-      let previousGiven = [];
-      let previousTaken = [];
-
-      // onSnapshot ile belgeyi dinle
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const docData = docSnap.data();
-          const currentGiven = docData.given || [];
-          const currentTaken = docData.taken || [];
-          // Eğer `given` arrayi değişmişse
-          if (amountType == 2) {
-            getRecords(amountType);
-            setIsLoading(false);
-
-            previousGiven = currentGiven;
-          }
-
-          if (amountType == 1) {
-            getRecords(amountType);
-            setIsLoading(false);
-
-            previousTaken = currentTaken;
-          }
-        } else {
-          Toast.show({
-            type: "errorToast",
-            text1: "Belge bulunamadı!",
-          });
-          setIsLoading(false);
-        }
-      });
-
-      // Component unmount edildiğinde dinleyiciyi kapat
-      return () => unsubscribe();
-    }, [amountType]);
-  };
-  useArrayChangeListener();
+  useEffect(() => {
+    gethistoryRecords(amountHistoryType);
+  }, [amountHistoryType, search]);
   return (
     <SafeAreaView style={styles.container}>
+      <View>
+        <Text style={styles.headerText}>Borç Geçmişi</Text>
+      </View>
       <View style={styles.screens}>
         <TouchableOpacity
           style={[
             styles.screensBtn,
-            amountType == 1
+            amountHistoryType == 1
               ? { borderColor: "rgb(77, 182, 172)" }
               : { borderColor: "gray" },
           ]}
-          onPress={() => setAmountType(1)}
+          onPress={() => setAmountHistoryType(1)}
         >
           <Text
             style={[
               styles.screensText,
-              amountType == 1
+              amountHistoryType == 1
                 ? { color: "rgb(0, 105, 92)" }
                 : { color: "black" },
             ]}
           >
-            Alınacaklar
+            Alınanlar
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[
             styles.screensBtn,
-            amountType == 2
+            amountHistoryType == 2
               ? { borderColor: "rgb(229, 115, 115)" }
               : { borderColor: "gray" },
           ]}
-          onPress={() => setAmountType(2)}
+          onPress={() => setAmountHistoryType(2)}
         >
           <Text
             style={[
               styles.screensText,
-              amountType == 2
+              amountHistoryType == 2
                 ? { color: "rgb(198, 40, 40)" }
                 : { color: "black" },
             ]}
           >
-            Verilecekler
+            Verilenler
           </Text>
         </TouchableOpacity>
       </View>
@@ -242,7 +202,6 @@ const SearchScreen = ({ navigation }) => {
             data={data}
             style={{
               flex: 1,
-              paddingHorizontal: 21,
             }}
             renderItem={({ item }) => {
               return (
@@ -255,20 +214,20 @@ const SearchScreen = ({ navigation }) => {
                     <View
                       style={[
                         styles.user,
-                        { width: screenWidth * 0.89 },
-                        amountType == 2
+                        { width: screenWidth * 1 },
+                        amountHistoryType == 2
                           ? {
-                              backgroundColor: "rgba(198, 40, 40,0.6)",
-                              borderColor: "rgba(229, 115, 115,0.5)",
+                              backgroundColor: "rgb(176, 190, 197)",
+                              borderColor: "rgb(69, 90, 100)",
                             }
                           : {
-                              backgroundColor: "rgba(0, 105, 92,0.6)",
-                              borderColor: "rgba(77, 182, 172,0.5)",
+                              backgroundColor: "rgb(176, 190, 197)",
+                              borderColor: "rgb(69, 90, 100)",
                             },
                       ]}
                     >
                       <Text style={styles.userText}>
-                        {amountType == 1 ? "Borçlu: " : "Alacaklı: "}
+                        {amountHistoryType == 1 ? "Veren: " : "Alan: "}
                         {item.name}
                       </Text>
                       <Text style={styles.userText}>
@@ -285,7 +244,7 @@ const SearchScreen = ({ navigation }) => {
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
-                onRefresh={() => onRefresh(amountType)}
+                onRefresh={() => onRefresh(amountHistoryType)}
               />
             }
           />
@@ -296,17 +255,19 @@ const SearchScreen = ({ navigation }) => {
   );
 };
 
-export default SearchScreen;
+export default HistoryRecord;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgb(207, 216, 220)",
   },
-
+  headerText: { fontSize: 40, fontWeight: "900", color: "rgb(38, 50, 56)" },
+  userText: { fontSize: 16, fontWeight: "500", color: "white" },
   screens: {
-    width: "80%",
+    width: "100%",
     flexDirection: "row",
   },
   screensBtn: {
@@ -340,16 +301,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   user: {
-    width: 350,
     height: 60,
     flexDirection: "row",
     paddingHorizontal: 30,
-    borderRadius: 30,
-    borderWidth: 4,
+    borderTopWidth: 2,
+    borderBottomWidth: 2,
+    borderStyle: "dashed",
     marginBottom: 10,
     justifyContent: "space-between",
     alignItems: "center",
   },
-
-  userText: { fontSize: 16, fontWeight: "500", color: "white" },
 });

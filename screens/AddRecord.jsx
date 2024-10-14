@@ -1,7 +1,4 @@
 import {
-  Button,
-  Dimensions,
-  KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,17 +17,16 @@ import { FIREBASE_DB } from "../Firebase";
 import Toast from "react-native-toast-message";
 import Loading from "../Components/Loading";
 
-const screenWidth = Dimensions.get("window").width;
 const AddRecord = () => {
   const [selectedId, setSelectedId] = useState("");
-  const { users, setUsers } = useContext(MyContext);
+  const { users } = useContext(MyContext);
   const [value, setValue] = useState("");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [common, setCommon] = useState("");
   const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
   const [value1, setValue1] = useState("");
+  const [show, setShow] = useState(false);
   const [isFocus, setIsFocus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -168,6 +164,7 @@ const AddRecord = () => {
           date != "" &&
           amount != "" &&
           users != "" &&
+          value1 != "" &&
           selectedId != ""
         ) {
           const fieldToUpdate = selectedId == 2 ? "given" : "taken";
@@ -268,7 +265,7 @@ const AddRecord = () => {
             maxHeight={300}
             labelField="label"
             valueField="value"
-            placeholder={!isFocus ? "Türü" : "..."}
+            placeholder={isFocus ? "..." : "Türü"}
             value={value1}
             onFocus={() => setIsFocus(true)}
             onBlur={() => setIsFocus(false)}

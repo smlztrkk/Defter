@@ -63,7 +63,7 @@ const UserAdd = ({ navigation }) => {
     ),
   };
 
-  async function addOrUpdateCityDocument() {
+  async function addOrUpdateUserDocument() {
     setIsLoading(true);
     try {
       if (!userAdd.trim()) {
@@ -84,7 +84,10 @@ const UserAdd = ({ navigation }) => {
 
       if (!existingUsers.includes(userAdd) && UserAdd !== "") {
         const newUsers = [...existingUsers, userAdd];
-
+        Toast.show({
+          type: "tomatoToast",
+          text1: "Kullanıcı Kayıdı Başarılı",
+        });
         await setDoc(
           docRef,
           {
@@ -92,10 +95,7 @@ const UserAdd = ({ navigation }) => {
           },
           { merge: true }
         );
-        Toast.show({
-          type: "tomatoToast",
-          text1: "Kullanıcı Kayıdı Başarılı",
-        });
+
         setIsLoading(false);
       } else {
         Toast.show({
@@ -137,7 +137,7 @@ const UserAdd = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.kaydetbtn}
-        onPress={addOrUpdateCityDocument}
+        onPress={() => addOrUpdateUserDocument()}
       >
         {isLoading ? (
           <Loading
@@ -186,12 +186,12 @@ const styles = StyleSheet.create({
   },
   kaydetbtn: {
     backgroundColor: "rgb(144, 164, 174)",
-    width: "50%",
+    width: "60%",
     height: 50,
     padding: 15,
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  back: { position: "absolute", top: 60, left: 30 },
+  back: { position: "absolute", top: 65, left: 15, padding: 15 },
 });

@@ -7,6 +7,7 @@ const MyProvider = ({ children }) => {
   const [users, setUsers] = useState([]);
   const [name, setName] = useState([]);
   const [amountType, setAmountType] = useState(1);
+  const [amountHistoryType, setAmountHistoryType] = useState(1);
 
   return (
     <MyContext.Provider
@@ -17,6 +18,8 @@ const MyProvider = ({ children }) => {
         setName,
         amountType,
         setAmountType,
+        amountHistoryType,
+        setAmountHistoryType,
       }}
     >
       {children}

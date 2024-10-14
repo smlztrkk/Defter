@@ -6,22 +6,22 @@ import {
   TouchableOpacity,
   View,
   RefreshControl,
-  ScrollView,
+  Dimensions,
 } from "react-native";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { MyContext } from "../MyProvider";
 import { FIREBASE_DB } from "../Firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import Toast, { BaseToast, ErrorToast } from "react-native-toast-message";
+import Toast from "react-native-toast-message";
 import Loading from "../Components/Loading";
-
 const ProfilScreen = ({ navigation }) => {
-  const { users, setUsers } = useContext(MyContext);
+  const { setUsers } = useContext(MyContext);
   const [recUsers, setRecUsers] = useState();
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const screenWidth = Dimensions.get("window").width;
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -138,6 +138,45 @@ const ProfilScreen = ({ navigation }) => {
       setIsLoading(false);
     }
   }
+
+  const useUserChangeListener = () => {
+    useEffect(() => {
+      // Belge referansı
+      const docRef = doc(FIREBASE_DB, "profiles", "mBEfqZUlf7j4CD21TxOY");
+
+      // Önceki kullanıcıları saklamak için bir değişken
+      let previousUsers = [];
+
+      // onSnapshot ile belgeyi dinle
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const docData = docSnap.data();
+          const currentUsers = docData.users || [];
+
+          // Eğer `users` arrayi değişmişse, yeni kullanıcıları bul
+          if (previousUsers.length !== currentUsers.length) {
+            const newUsers = currentUsers.filter(
+              (user) => !previousUsers.includes(user)
+            );
+
+            if (newUsers.length > 0) {
+            }
+            readUserDocument();
+            // `previousUsers` güncelle
+            previousUsers = currentUsers;
+          }
+        } else {
+          Toast.show({
+            type: "errorToast",
+            text1: "Belge bulunamadı!",
+          });
+        }
+      });
+
+      return () => unsubscribe();
+    }, []);
+  };
+  useUserChangeListener();
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -149,23 +188,25 @@ const ProfilScreen = ({ navigation }) => {
             item={require("../assets/Lottie/4.json")}
             size={{ width: 400, height: 400 }}
           />
-        ) : recUsers != "" ? (
+        ) : Array.isArray(recUsers) && recUsers.length > 0 ? (
           <FlatList
             data={recUsers}
             renderItem={({ item, index }) => {
               return (
                 <View style={styles.profiles}>
                   <TouchableOpacity onPress={() => profil(item)}>
-                    <View style={styles.user}>
+                    <View style={[styles.user, { width: screenWidth * 0.65 }]}>
                       <Text style={styles.userText}>{item}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => removeUser(item)}>
-                    <View style={styles.userDel}>
+                    <View
+                      style={[styles.userDel, { width: screenWidth * 0.15 }]}
+                    >
                       <MaterialIcons
                         name="delete-forever"
                         size={28}
-                        color="rgb(255, 138, 128)"
+                        color="rgb(255, 108, 108)"
                       />
                     </View>
                   </TouchableOpacity>
@@ -180,15 +221,21 @@ const ProfilScreen = ({ navigation }) => {
             }
           />
         ) : (
-          <Text>kullanıcı yok oluşturunuz</Text>
+          <View style={styles.userAdd}>
+            <Text style={styles.userAddText}>
+              kullanıcı yok kullanıcı oluşturunuz
+            </Text>
+            <AntDesign name="arrowdown" size={44} color="gray" />
+          </View>
         )}
       </View>
       <TouchableOpacity onPress={() => navigation.navigate("UserAdd")}>
-        <View style={styles.ekle}>
+        <View style={[styles.ekle, { width: screenWidth * 0.8 }]}>
           <Text style={styles.ekleText}>kullanıcı ekle</Text>
-          <AntDesign name="adduser" size={32} color="black" />
+          <AntDesign name="adduser" size={32} color="white" />
         </View>
       </TouchableOpacity>
+
       <Toast visibilityTime={3000} config={toastConfig} />
     </SafeAreaView>
   );
@@ -211,8 +258,8 @@ const styles = StyleSheet.create({
     height: 60,
     paddingVertical: 10,
     paddingHorizontal: 30,
-    margin: 50,
-    borderRadius: 30,
+    marginVertical: 50,
+    borderRadius: 20,
     backgroundColor: "rgb(144, 164, 174)",
   },
   user: {
@@ -220,28 +267,35 @@ const styles = StyleSheet.create({
     height: 60,
     paddingLeft: 20,
     paddingRight: 20,
-    borderTopLeftRadius: 30,
-    borderBottomLeftRadius: 30,
-    backgroundColor: "rgb(96, 125, 139)",
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    backgroundColor: "rgba(0, 200, 83,0.5)",
     marginVertical: 10,
     justifyContent: "center",
     alignItems: "center",
+  },
+  userAddText: { fontWeight: "700", fontSize: 17, color: "black" },
+  userAdd: {
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 20,
   },
   userDel: {
     width: 50,
     height: 60,
     paddingLeft: 5,
     paddingRight: 5,
-    borderTopRightRadius: 30,
-    borderBottomRightRadius: 30,
-    backgroundColor: "rgb(120, 144, 156)",
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    backgroundColor: "rgba(0, 200, 83,0.35)",
     marginVertical: 10,
     justifyContent: "center",
     alignItems: "center",
   },
   profiles: { flex: 1, flexDirection: "row" },
   userText: { fontSize: 20, fontWeight: "700", color: "white" },
-  ekleText: { fontSize: 20 },
+  ekleText: { fontSize: 20, color: "white" },
   girisText: { fontSize: 40, fontWeight: "900", color: "rgb(38, 50, 56)" },
   header: { marginVertical: 50 },
   flatlist: { flex: 1 },
